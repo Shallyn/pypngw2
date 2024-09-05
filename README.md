@@ -1,11 +1,11 @@
-# pypngw
+# pypngw2
+
 Post-Newtonian GW waveform generator
 
 Installation && compile
 
 ```
-./mkconf.sh
-./configure
+cmake .
 make
 ```
 
@@ -16,7 +16,7 @@ Run in python
 Run in python
 
 ```python
-from pypngw import calculate_strain_SPA
+from pypngw2 import calculate_strain_SPA
 m1 = 12
 m2 = 10
 chi1 = 0
