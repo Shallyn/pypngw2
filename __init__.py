@@ -682,8 +682,8 @@ def calculate_strain_SPA(m1:float, m2:float,
     apf = AntennaPatternF(detname, psi=psi, ra=ra, dec=dec)
     bbh = pybbh(m1=m1, m2=m2, chi1=chi1, chi2=chi2, e0=e0, distance=distance,
                 iota=iota, phic = phic, fmin = fmin, vommax = 0.277, **kwargs)
-    fmax = bbh.vommax**3 / (np.pi * bbh.MT)
-    freqs = np.arange(fmin, fmax, deltaF)
+    fmax = bbh.vommax**3 / (np.pi * bbh.MT) if 'fmax' not in kwargs else kwargs['fmax']
+    freqs = np.arange(fmin, fmax, deltaF) if 'freqs' not in kwargs else kwargs['freqs']
     htildeSPA = bbh.htilde_strain_SPA(freqs, apf)
     return freqs, htildeSPA
 
