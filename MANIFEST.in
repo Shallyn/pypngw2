@@ -1,0 +1,3 @@
+recursive-include pypngw2/libbasic *
+recursive-include pypngw2/libcore *
+recursive-include pypngw2/libprec *
