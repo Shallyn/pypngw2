@@ -5,8 +5,8 @@ Post-Newtonian GW waveform generator
 Installation && compile
 
 ```
-cmake .
-make
+python3 setup.py build_py
+python3 setup.py install
 ```
 
 sometimes the lib cannot use in Apple core macbook.
