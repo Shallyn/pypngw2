@@ -15,6 +15,20 @@ from .ctypes_struct import *
 from .pngwtd import pypngwtd, DetectorDict
 from pathlib import Path
 import json
+import glob
+
+# def load_library(lib_subdir, libname):
+#     here = os.path.abspath(os.path.dirname(__file__))
+#     lib_dir = os.path.join(here, lib_subdir)
+#     extensions = ['.so', '.dylib', '.dll', '.pyd']
+#     for ext in extensions:
+#         pattern = os.path.join(lib_dir, ext)
+#         files = glob.glob(pattern)
+#         if files:
+#             libpath = files[0]
+#             return ctypes.CDLL(libpath)
+#     raise FileNotFoundError(f'cannot find {lib_dir}')
+
 
 lib_path = Path(__file__).parent / 'libcore/libcore.so'
 myLib = ctypes.CDLL(lib_path)
