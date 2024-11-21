@@ -43,9 +43,11 @@ INT get_ilk_from_nm(INT n, INT m)
     return ret;
 }
 
-BBHDynParams *CreateBBHDynParams(REAL8 eta, REAL8 chi1, REAL8 chi2, REAL8 kappa1, REAL8 kappa2, REAL8 Theta, REAL8 Phi, REAL8 eini, REAL8 vomini)
+BBHDynParams *CreateBBHDynParams(REAL8 eta, REAL8 chi1, REAL8 chi2, REAL8 kappa1, REAL8 kappa2, 
+                REAL8 Theta, REAL8 Phi, REAL8 eini, REAL8 vomini, INT PN_Ord2)
 {
     BBHDynParams *ret = (BBHDynParams*)MYMalloc(sizeof(BBHDynParams));
+    ret->PN_Ord2 = PN_Ord2;
     ret->eta = eta;
     ret->eta2 = eta*eta;
     ret->eta3 = ret->eta2*eta;
@@ -141,10 +143,10 @@ void SetBBHDynVariables(REAL8 e0, REAL8 vom, BBHDynVariables *var)
 }
 
 BBHCore *CreateBBHCore(REAL8 eta, REAL8 chi1, REAL8 chi2, REAL8 kappa1, REAL8 kappa2,
-    REAL8 Theta, REAL8 Phi, REAL8 e0, REAL8 vom)
+    REAL8 Theta, REAL8 Phi, REAL8 e0, REAL8 vom, INT PN_Ord2)
 {
     BBHCore *ret = (BBHCore*)MYMalloc(sizeof(BBHCore));
-    ret->pms = CreateBBHDynParams(eta, chi1, chi2, kappa1, kappa2, Theta, Phi, e0, vom);
+    ret->pms = CreateBBHDynParams(eta, chi1, chi2, kappa1, kappa2, Theta, Phi, e0, vom, PN_Ord2);
     ret->var = (BBHDynVariables*)MYMalloc(sizeof(BBHDynVariables));
     SetBBHDynVariables(e0, vom, ret->var);
     return ret;

@@ -39,6 +39,7 @@ typedef struct {
 }BBHDynVariables;
 
 typedef struct {
+    INT   PN_Ord2; // 2*PN order
     REAL8 eta;
     REAL8 eta2;
     REAL8 eta3;

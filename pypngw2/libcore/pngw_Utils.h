@@ -15,9 +15,10 @@
 INT get_ilk_from_nm(INT n, INT m);
 REAL8 calculate_k(BBHDynVariables *var, BBHDynParams *pms);
 REAL8 calculate_k_from_core(BBHCore *core);
-BBHDynParams *CreateBBHDynParams(REAL8 eta, REAL8 chi1, REAL8 chi2, REAL8 kappa1, REAL8 kappa2, REAL8 Theta, REAL8 Phi, REAL8 eini, REAL8 vomini);
+BBHDynParams *CreateBBHDynParams(REAL8 eta, REAL8 chi1, REAL8 chi2, REAL8 kappa1, REAL8 kappa2, 
+    REAL8 Theta, REAL8 Phi, REAL8 eini, REAL8 vomini, INT PN_Ord2);
 BBHCore *CreateBBHCore(REAL8 eta, REAL8 chi1, REAL8 chi2, REAL8 kappa1, REAL8 kappa2,
-    REAL8 Theta, REAL8 Phi, REAL8 e0, REAL8 vom);
+    REAL8 Theta, REAL8 Phi, REAL8 e0, REAL8 vom, INT PN_Ord2);
 void SetBBHDynVariables(REAL8 e0, REAL8 vom, BBHDynVariables *var);
 void SetBBHCoreDynVariables(REAL8 e0, REAL8 vom, BBHCore *core);
 

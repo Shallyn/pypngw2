@@ -351,11 +351,13 @@ class AntennaPatternF(object):
 class pybbh(pypngwtd):
     def __init__(self, **kwargs):
         super(pybbh, self).__init__(**kwargs)
+        self.PN_Ord2 = int(2*kwargs.get('PN_Order', 2.0))
         self.__ccore = myLib.CreateBBHCore(ctypes.c_double(self.eta),
             ctypes.c_double(self.chi1), ctypes.c_double(self.chi2),
             ctypes.c_double(self.kappa1), ctypes.c_double(self.kappa2),
             ctypes.c_double(self.Theta), ctypes.c_double(self.Phi),
-            ctypes.c_double(self.e0), ctypes.c_double(self.vom0))
+            ctypes.c_double(self.e0), ctypes.c_double(self.vom0), 
+            ctypes.c_int(self.PN_Ord2))
     def calculate_k_ccore(self, et:float, vom:float)->float:
         myLib.SetBBHCoreDynVariables(ctypes.c_double(et), ctypes.c_double(vom), self.__ccore)
         ret = myLib.calculate_k_from_core(self.__ccore)
@@ -678,6 +680,7 @@ def calculate_strain_SPA(m1:float, m2:float,
                          iota:float, phic:float, e0:float, distance:float,
                          fmin:float, deltaF:float, 
                          detname:str, psi:float, ra:float, dec:float,
+                         PN_Order:float = 2.0,
                          **kwargs):
     '''
         NOTE:
@@ -695,7 +698,7 @@ def calculate_strain_SPA(m1:float, m2:float,
     # fstartTD, deltaF, tshift, freqWind = calculate_fStart(fmin, m1, m2, chi1, chi2, deltaT)
     apf = AntennaPatternF(detname, psi=psi, ra=ra, dec=dec)
     bbh = pybbh(m1=m1, m2=m2, chi1=chi1, chi2=chi2, e0=e0, distance=distance,
-                iota=iota, phic = phic, fmin = fmin, vommax = 0.277, **kwargs)
+                iota=iota, phic = phic, fmin = fmin, vommax = 0.277, PN_Order = PN_Order, **kwargs)
     fmax = bbh.vommax**3 / (np.pi * bbh.MT) if 'fmax' not in kwargs else kwargs['fmax']
     freqs = np.arange(fmin, fmax, deltaF) if 'freqs' not in kwargs else kwargs['freqs']
     htildeSPA = bbh.htilde_strain_SPA(freqs, apf)
