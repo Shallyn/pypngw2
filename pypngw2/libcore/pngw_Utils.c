@@ -177,7 +177,7 @@ REAL8 calculate_k(BBHDynVariables *var, BBHDynParams *pms)
     REAL8 PN3 = -var->vom3*(3.*pms->sx + pms->dm*pms->sigx)/pow(tmpe, 1.5);
     REAL8 PN4 = var->vom4 * (102 + var->e02*(51 - 26*pms->eta) - 28*pms->eta + 3*(pms->kappa1 - pms->dm*pms->kappa1 + pms->kappa2 + pms->dm*pms->kappa2 - 2*pms->eta*(2 + pms->kappa1 + pms->kappa2))*pms->sigx2 +
         6*pms->sx*((-pms->kappa1 + pms->kappa2 + pms->dm*(2 + pms->kappa1 + pms->kappa2))*pms->sigx + (2 + pms->kappa1 + pms->kappa2)*pms->sx)) / (4. * tmpe * tmpe);
-    return PN2 + PN3 + PN4;
+    return (pms->PN_Ord2>=2 ? PN2:0) + (pms->PN_Ord2>=3 ? PN3:0) + (pms->PN_Ord2>=4 ? PN4:0);
 }
 
 
