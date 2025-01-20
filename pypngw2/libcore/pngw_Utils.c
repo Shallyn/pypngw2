@@ -11,6 +11,15 @@
 #include "pngw_Utils.h"
 #include <pngw_Datatypes.h>
 
+INT INTERNAL_DEBUG_FLAG = 0;
+void set_debug_level(INT flag) {
+    INTERNAL_DEBUG_FLAG = flag;
+}
+INT get_debug_level() {
+    return INTERNAL_DEBUG_FLAG;
+}
+
+
 size_t n_scpart_Func = 171;
 INT scpart_Func_lkList[171][2]={{1,-6},{1,-5},{1,-4},{1,-3},{1,-2},{1,-1},{1,0},{1,1},{1,2},{1,3},
 	{1,4},{1,5},{1,6},{2,-6},{2,-5},{2,-4},{2,-3},{2,-2},{2,-1},{2,0},

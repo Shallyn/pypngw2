@@ -673,6 +673,54 @@ class pybbh(pypngwtd):
         myLibBasic.CheckMemoryLeaks()
         return self.MT*self.hPref*(ret_ReQ + 1.j*ret_ImQ)
 
+    def htilde_strain_SPA_emode(self, ikl:int, freqs:np.ndarray, apf:AntennaPatternF):
+        freqsVec = convert_ndarray_to_REAL8Vector(freqs * self.MT)
+        ReAmpQVec = ctypes.POINTER(pyREAL8Vector)()
+        ImAmpQVec = ctypes.POINTER(pyREAL8Vector)()
+        PhaseVec = ctypes.POINTER(pyREAL8Vector)()
+        ret_cev = myLib.calc_QstrainSPA_emode(ctypes.c_int(ikl), ctypes.c_double(self.MT), 
+            freqsVec, self.__ccore, apf.ccore,
+            ctypes.byref(ReAmpQVec), ctypes.byref(ImAmpQVec), ctypes.byref(PhaseVec))
+        ret_ReAmpQ = convert_REAL8Vector_to_numpy(ReAmpQVec)
+        ret_ImAmpQ = convert_REAL8Vector_to_numpy(ImAmpQVec)
+        ret_Phase = convert_REAL8Vector_to_numpy(PhaseVec)
+        myLibBasic.DestroyREAL8Vector(freqsVec)
+        myLibBasic.CheckMemoryLeaks()
+        return self.MT*self.hPref, ret_ReAmpQ, ret_ImAmpQ, ret_Phase
+    
+    def htilde_strain_SPA_emodes_iter(self, freqs:np.ndarray, apf:AntennaPatternF):
+        ikl_max = 171
+        for ikl in range(ikl_max):
+            freqsVec = convert_ndarray_to_REAL8Vector(freqs * self.MT)
+            ReAmpQVec = ctypes.POINTER(pyREAL8Vector)()
+            ImAmpQVec = ctypes.POINTER(pyREAL8Vector)()
+            PhaseVec = ctypes.POINTER(pyREAL8Vector)()
+            ret_cev = myLib.calc_QstrainSPA_emode(ctypes.c_int(ikl), ctypes.c_double(self.MT), 
+                freqsVec, self.__ccore, apf.ccore,
+                ctypes.byref(ReAmpQVec), ctypes.byref(ImAmpQVec), ctypes.byref(PhaseVec))
+            ret_ReAmpQ = convert_REAL8Vector_to_numpy(ReAmpQVec)
+            ret_ImAmpQ = convert_REAL8Vector_to_numpy(ImAmpQVec)
+            ret_Phase = convert_REAL8Vector_to_numpy(PhaseVec)
+            myLibBasic.DestroyREAL8Vector(freqsVec)
+            myLibBasic.CheckMemoryLeaks()
+            yield self.MT*self.hPref, ret_ReAmpQ, ret_ImAmpQ, ret_Phase
+
+
+def iter_strain_SPA(m1:float, m2:float, 
+                    chi1:float, chi2:float, 
+                    iota:float, phic:float, e0:float, distance:float,
+                    fmin:float, deltaF:float, 
+                    detname:str, psi:float, ra:float, dec:float,
+                    PN_Order:float = 2.0,
+                    **kwargs):
+    # fstartTD, deltaF, tshift, freqWind = calculate_fStart(fmin, m1, m2, chi1, chi2, deltaT)
+    apf = AntennaPatternF(detname, psi=psi, ra=ra, dec=dec)
+    bbh = pybbh(m1=m1, m2=m2, chi1=chi1, chi2=chi2, e0=e0, distance=distance,
+                iota=iota, phic = phic, fmin = fmin, vommax = 0.277, PN_Order = PN_Order, **kwargs)
+    fmax = bbh.vommax**3 / (np.pi * bbh.MT) if 'fmax' not in kwargs else kwargs['fmax']
+    freqs = np.arange(fmin, fmax, deltaF) if 'freqs' not in kwargs else kwargs['freqs']
+    for hpref, ReAmpQ, ImAmpQ, phase in bbh.htilde_strain_SPA_emodes_iter(freqs, apf):
+        yield hpref, freqs, ReAmpQ, ImAmpQ, phase
 
 
 def calculate_strain_SPA(m1:float, m2:float, 

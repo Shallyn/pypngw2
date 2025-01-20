@@ -12,6 +12,11 @@
 #define __INCLUDE_PNGW_UTILS__
 #include "pngw_Datatypes.h"
 
+#define INTERNAL_DEBUG_LEVEL get_debug_level()
+#define SET_INTERNAL_DEBUG_LEVEL(flag) set_debug_level(flag)
+
+void set_debug_level(INT flag);
+INT get_debug_level();
 INT get_ilk_from_nm(INT n, INT m);
 REAL8 calculate_k(BBHDynVariables *var, BBHDynParams *pms);
 REAL8 calculate_k_from_core(BBHCore *core);

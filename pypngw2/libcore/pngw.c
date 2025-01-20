@@ -114,9 +114,10 @@ COMPLEX16 calculate_QpcWaveform_eexp(INT n, INT m, REAL8 lval, BBHCore *core)
 INT calculate_QpcWaveform_eexp_emode(INT n, INT m, REAL8 lval, BBHCore *core,
     COMPLEX16 *ret_QMp, COMPLEX16 *ret_QMc)
 {
-    COMPLEX16 Qplus_U, Qplus_E, Qminus_U, Qminus_E, status;
-    COMPLEX16 Qplus_L, Qminus_L, Qplus_LE, Qminus_LE;
-    COMPLEX16 QPlus, QMinus;
+    INT status;
+    COMPLEX16 Qplus_U=0.0, Qplus_E=0.0, Qminus_U=0.0, Qminus_E=0.0;
+    COMPLEX16 Qplus_L=0.0, Qminus_L=0.0, Qplus_LE=0.0, Qminus_LE=0.0;
+    COMPLEX16 QPlus=0.0, QMinus=0.0;
     INT ilk = get_ilk_from_nm(n, m);
     REAL8 k = calculate_k(core->var, core->pms);
     status = calculate_QUPart_waveform_ecoeff(ilk, lval, core->var, core->pms, &Qplus_U, &Qminus_U);
@@ -287,19 +288,21 @@ REAL8 Calculate_l(BBHCore *core)
     REAL8 PN4 = (PartPN4e00 + e02*PartPN4e02 +
     e04*PartPN4e04 + e06*PartPN4e06 + e08*PartPN4e08)*var->vom4;
 #if 0
-// print_debug("e0 = %.16e\n", pms->eini);
-// print_debug("vom0 = %.16e\n", pms->vomini);
-// print_debug("vom = %.16e\n", var->vom);
-// print_debug("chiv = %.16e\n", chiv);
+if(INTERNAL_DEBUG_LEVEL) {
+    print_debug("e0 = %.16e\n", pms->eini);
+    print_debug("vom0 = %.16e\n", pms->vomini);
+    print_debug("vom = %.16e\n", var->vom);
+    print_debug("chiv = %.16e\n", chiv);
 
-// print_debug("pref = %.16e\n", pref);
-// print_debug("PN0 = %.16e\n", PN0);
-// print_debug("PN2 = %.16e\n", PN2);
+    print_debug("pref = %.16e\n", pref);
+    print_debug("PN0 = %.16e\n", PN0);
+    print_debug("PN2 = %.16e\n", PN2);
 
-// print_debug("PN3 = %.16e\n", PN3);
-// print_debug("PN4 = %.16e\n", PN4);
+    print_debug("PN3 = %.16e\n", PN3);
+    print_debug("PN4 = %.16e\n", PN4);
+    print_debug("vom = %.16e, final = %.16e\n", var->vom, pref*(PN0 + PN2 + PN3 + PN4));
+}
 //
-print_debug("vom = %.16e, final = %.16e\n", var->vom, pref*(PN0 + PN2 + PN3 + PN4));
 #endif
 	return pref*(PN0 + (pms->PN_Ord2>=2 ? PN2:0) + (pms->PN_Ord2>=3 ? PN3:0) + (pms->PN_Ord2>=4 ? PN4:0));
 }
@@ -684,6 +687,7 @@ INT calc_QstrainSPA_Allemode(REAL8 MT, REAL8Vector *freqsVec, BBHCore *core, Ant
         m = scpart_Func_lkList[ikl][0];
         n = scpart_Func_lkList[ikl][1];
         for (INT i = 0; i < freqsVec->length; i++) {
+            // if (ikl==0) SET_INTERNAL_DEBUG_LEVEL(1);
             vom = Calculate_vom(n, m, freqsVec->data[i], core);
             et = calc_et_by_vom(vom, core->pms);
             SetBBHCoreDynVariables(et, vom, core);
@@ -691,16 +695,30 @@ INT calc_QstrainSPA_Allemode(REAL8 MT, REAL8Vector *freqsVec, BBHCore *core, Ant
             tval = Calculate_t(core);
             Fp = calculate_barFplus_t(MT*tval, apf);
             Fc = calculate_barFcross_t(MT*tval, apf);
-            phase = (m + n*k)*lval - CST_2PI*tval*freqsVec->data[i] + CST_PI_4;
             k = calculate_k(core->var, core->pms);
+            phase = (m + n*k)*lval - CST_2PI*tval*freqsVec->data[i] + CST_PI_4;
             invsqpsiddot = calculate_invsqpsiddot(n, m, lval, core);
             // Qpc = calculate_QpcWaveform_emode(n, m, lval, core);
             status = calculate_QpcWaveform_eexp_emode(n, m, lval, core, &Qp, &Qc);
             AmpQp = CST_SQRT2PI * invsqpsiddot * Qp;
             AmpQc = CST_SQRT2PI * invsqpsiddot * Qc;
-            // print_debug("vom = %.5e, et = %.5e, l = %.5e, t = %.5e, invsqpsiddot = %.5e, Qpc = %.5e + I %.5e\n",
-            //     vom, et, invsqpsiddot, creal(Qpc), cimag(Qpc));
             QQ = AmpQp * cexp(I*phase) * Fp + AmpQc * cexp(I*phase) * Fc;
+            // if (ikl==1){
+            //     // print_debug("m=%d, n=%d\n", m, n);
+            //     // print_debug("PN=%d\n", core->pms->PN_Ord2);
+            //     // print_debug("pref = %.5e\n", - 1./(32.*core->var->vom5*core->pms->eta));
+            //     // print_debug("chiv = %.5e\n", pow(core->pms->vomini / core->var->vom, 19./6.));
+            //     // print_debug("vom, vom2, vom3, vom4, vom5, vom6 = %.5e, %.5e, %.5e, %.5e, %.5e, %.5e\n", 
+            //     //     core->var->vom, core->var->vom2, core->var->vom3, core->var->vom4, core->var->vom5, core->var->vom6);
+            //     // print_debug("e02 = %.5e\n", core->pms->eini*core->pms->eini);
+            //     print_debug("[%d]f=%.5e, vom = %.5e, et = %.5e, l = %.5e, t = %.5e, invsqpsiddot = %.5e, Qp = %.5e + I %.5e, Qc = %.5e + I %.5e\n",
+            //         ikl, freqsVec->data[i], vom, et, lval, tval, invsqpsiddot, creal(Qp), cimag(Qp), creal(Qc), cimag(Qc));
+            //     print_debug("Fp = %.5e, Fc = %.5e\n", Fp, Fc);
+            //     print_debug("phase = %.5e\n", phase);
+            //     print_debug("QQ = %.5e + I %.5e\n", creal(QQ), cimag(QQ));
+            //     // SET_INTERNAL_DEBUG_LEVEL(0);
+            //     print_err("\n");
+            // }
             // if (isnan(creal(QQ)) || isnan(cimag(QQ)))
             // print_debug("\n\tAmpQp = %.5e + I%.5e, phase = %.5e, Fp = %.5e\n\tAmpQc = %.5e + I%.5e, phase = %.5e, Fc = %.5e\n", 
             //     creal(AmpQp), cimag(AmpQp), phase, Fp,
@@ -715,5 +733,85 @@ INT calc_QstrainSPA_Allemode(REAL8 MT, REAL8Vector *freqsVec, BBHCore *core, Ant
     }
     *ret_ReQVec = ReQVec;
     *ret_ImQVec = ImQVec;
+    return X_SUCCESS;
+}
+
+INT calc_QstrainSPA_emode(INT ikl, REAL8 MT, REAL8Vector *freqsVec, BBHCore *core, AntennaPatternF *apf,
+    REAL8Vector **ret_ReAmpQVec, REAL8Vector **ret_ImAmpQVec, REAL8Vector **ret_PhaseVec)
+{
+    INT status;
+    REAL8 vom;
+    REAL8 et;
+    REAL8 k, lval, tval;
+    REAL8Vector *ReAmpQVec = CreateREAL8Vector(freqsVec->length);
+    REAL8Vector *ImAmpQVec = CreateREAL8Vector(freqsVec->length);
+    REAL8Vector *PhaseVec = CreateREAL8Vector(freqsVec->length);
+
+    for (INT i=0; i < freqsVec->length; i++) {
+        ReAmpQVec->data[i] = 0;
+        ImAmpQVec->data[i] = 0;
+        PhaseVec->data[i] = 0;
+    }
+
+    INT n, m;
+    COMPLEX16 Qp, Qc, AmpQQ, AmpQp, AmpQc;
+    REAL8 Fp, Fc, phase;
+    REAL8 invsqpsiddot;
+    m = scpart_Func_lkList[ikl][0];
+    n = scpart_Func_lkList[ikl][1];
+    for (INT i = 0; i < freqsVec->length; i++) {
+        // if (ikl==1) SET_INTERNAL_DEBUG_LEVEL(1);
+        vom = Calculate_vom(n, m, freqsVec->data[i], core);
+        et = calc_et_by_vom(vom, core->pms);
+        SetBBHCoreDynVariables(et, vom, core);
+        lval = Calculate_l(core);
+        tval = Calculate_t(core);
+        Fp = calculate_barFplus_t(MT*tval, apf);
+        Fc = calculate_barFcross_t(MT*tval, apf);
+        k = calculate_k(core->var, core->pms);
+        phase = (m + n*k)*lval - CST_2PI*tval*freqsVec->data[i] + CST_PI_4;
+        invsqpsiddot = calculate_invsqpsiddot(n, m, lval, core);
+        // Qpc = calculate_QpcWaveform_emode(n, m, lval, core);
+        status = calculate_QpcWaveform_eexp_emode(n, m, lval, core, &Qp, &Qc);
+        AmpQp = CST_SQRT2PI * invsqpsiddot * Qp;
+        AmpQc = CST_SQRT2PI * invsqpsiddot * Qc;
+        // print_debug("vom = %.5e, et = %.5e, l = %.5e, t = %.5e, invsqpsiddot = %.5e, Qpc = %.5e + I %.5e\n",
+        //     vom, et, invsqpsiddot, creal(Qpc), cimag(Qpc));
+        AmpQQ = (AmpQp * Fp + AmpQc * Fc);//*cexp(I*phase);
+        // if (ikl==1){
+        //     // print_debug("m=%d, n=%d\n", m, n);
+        //     // print_debug("PN=%d\n", core->pms->PN_Ord2);
+        //     // print_debug("pref = %.5e\n", - 1./(32.*core->var->vom5*core->pms->eta));
+        //     // print_debug("chiv = %.5e\n", pow(core->pms->vomini / core->var->vom, 19./6.));
+        //     // print_debug("vom, vom2, vom3, vom4, vom5, vom6 = %.5e, %.5e, %.5e, %.5e, %.5e, %.5e\n", 
+        //     //     core->var->vom, core->var->vom2, core->var->vom3, core->var->vom4, core->var->vom5, core->var->vom6);
+        //     // print_debug("e02 = %.5e\n", core->pms->eini*core->pms->eini);
+        //     print_debug("[%d]f=%.5e, vom = %.5e, et = %.5e, l = %.5e, t = %.5e, invsqpsiddot = %.5e, Qp = %.5e + I %.5e, Qc = %.5e + I %.5e\n",
+        //         ikl, 
+        //         freqsVec->data[i], vom, et, lval, tval, invsqpsiddot, 
+        //         creal(Qp), cimag(Qp), creal(Qc), cimag(Qc));
+        //     print_debug("Fp = %.5e, Fc = %.5e\n", Fp, Fc);
+        //     print_debug("phase = %.5e\n", phase);
+        //     print_debug("QQ = %.5e + I %.5e\n", creal(AmpQQ*cexp(I*phase)), cimag(AmpQQ*cexp(I*phase)));
+        //     // SET_INTERNAL_DEBUG_LEVEL(0);
+        //     print_err("\n");
+        // }
+        // if (isnan(creal(QQ)) || isnan(cimag(QQ)))
+        // print_debug("\n\tAmpQp = %.5e + I%.5e, phase = %.5e, Fp = %.5e\n\tAmpQc = %.5e + I%.5e, phase = %.5e, Fc = %.5e\n", 
+        //     creal(AmpQp), cimag(AmpQp), phase, Fp,
+        //     creal(AmpQc), cimag(AmpQc), phase, Fc);
+            // print_debug("Q(%d,%d) = (%.5e + I %.5e)\n\tQp = (%.5e + I %.5e), Qc = (%.5e + I %.5e)\n",
+            //         m, n, creal(QQ), cimag(QQ),
+            //         creal(Qp), cimag(Qp),
+            //         creal(Qc), cimag(Qc));
+        ReAmpQVec->data[i] = creal(AmpQQ);
+        ImAmpQVec->data[i] = cimag(AmpQQ);
+        PhaseVec->data[i] = phase;
+        // ReQVec->data[i] = creal(QQ);
+        // ImQVec->data[i] = cimag(QQ);
+    }
+    *ret_ReAmpQVec = ReAmpQVec;
+    *ret_ImAmpQVec = ImAmpQVec;
+    *ret_PhaseVec = PhaseVec;
     return X_SUCCESS;
 }
