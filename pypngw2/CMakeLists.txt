@@ -13,6 +13,20 @@ else()
     set(PYPNGW2_MATH_LIB)
 endif()
 
+find_library(PYPNGW2_GSL_LIB gsl)
+find_library(PYPNGW2_GSLCBLAS_LIB gslcblas)
+find_library(PYPNGW2_FFTW3_LIB fftw3)
+
+if(NOT PYPNGW2_GSL_LIB)
+    set(PYPNGW2_GSL_LIB gsl)
+endif()
+if(NOT PYPNGW2_GSLCBLAS_LIB)
+    set(PYPNGW2_GSLCBLAS_LIB gslcblas)
+endif()
+if(NOT PYPNGW2_FFTW3_LIB)
+    set(PYPNGW2_FFTW3_LIB fftw3)
+endif()
+
 if(APPLE)
     set(PYPNGW2_NATIVE_RPATH
         "@loader_path"

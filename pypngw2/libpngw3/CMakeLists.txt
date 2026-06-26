@@ -14,7 +14,12 @@ set(DIR_LIB_SRCS
 add_library (pngw3 SHARED ${DIR_LIB_SRCS})
 add_library (proj::pngw3 ALIAS pngw3)
 target_include_directories(pngw3 PUBLIC "$<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}>")
-target_link_libraries(pngw3 basic pnFourier ${PYPNGW2_MATH_LIB})
+target_link_libraries(pngw3
+	PUBLIC
+		basic
+		pnFourier
+		${PYPNGW2_MATH_LIB}
+)
 
 # profect info
 project(MAIN_PNGW3)
