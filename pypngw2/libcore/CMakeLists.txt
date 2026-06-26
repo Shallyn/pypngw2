@@ -8,7 +8,7 @@ set(DIR_LIB_SRCS
 	pngw.c)
 
 # set dy-library
-add_library (core MODULE ${DIR_LIB_SRCS})
+add_library (core SHARED ${DIR_LIB_SRCS})
 add_library (proj::core ALIAS core)
 target_include_directories(core PUBLIC "$<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}>")
 target_link_libraries(core basic)

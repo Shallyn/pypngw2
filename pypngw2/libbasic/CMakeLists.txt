@@ -1,4 +1,5 @@
 # files
+find_package(Threads REQUIRED)
 set(DIR_LIB_SRCS 
 	basic_Alloc.c
 	basic_Debug.c
@@ -7,13 +8,17 @@ set(DIR_LIB_SRCS
 	utils_Factories.c
 	utils_OptionParser.c 
 	utils_StringConvert.c
-	utils_stringVector.c)
+	utils_StringVector.c)
 
 # set dy-library
 add_library (basic SHARED ${DIR_LIB_SRCS})
 add_library (proj::basic ALIAS basic)
 target_include_directories(basic PUBLIC "$<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}>")
-target_link_libraries(basic)
+target_link_libraries(basic
+	PRIVATE
+		Threads::Threads
+		m
+)
 
 # profect info
 project(MAIN_BASIC)

@@ -47,6 +47,8 @@ class BuildCMake(build_py):
             ('libbasic', 'libbasic'),
             ('libcore', 'libcore'),
             ('libprec', 'libprec'),
+            ('libpnfourier', 'libpnfourier'),
+            ('libpngw3', 'libpngw3'),
         ]
         for subdir, libname in libs:
             # find dylibs
@@ -99,6 +101,8 @@ setup(
         'pypngw2.libbasic': ['*'],
         'pypngw2.libcore': ['*'],
         'pypngw2.libprec': ['*'],
+        'pypngw2.libpnfourier' : ['*'],
+        'pypngw2.libpngw3' : ['*']
     },
     zip_safe=False,
 )

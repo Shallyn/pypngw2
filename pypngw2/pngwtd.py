@@ -87,6 +87,68 @@ DEFAULT_phic = 0.0
 DEFAULT_kappa1 = 1.0
 DEFAULT_kappa2 = 1.0
 DEFAULT_vommax = 1./np.sqrt(6) # 0.277
+
+class pyPNBBHParams(object):
+    def __init__(self, **kwargs):
+        self.__m1 = kwargs.get('m1', DEFAULT_m1)
+        self.__m2 = kwargs.get('m2', DEFAULT_m2)
+        self.__e0 = kwargs.get('e0', DEFAULT_e0)
+        self.__zeta0 = kwargs.get('zeta0', DEFAULT_zeta0)
+        self.__Theta = kwargs.get('iota', DEFAULT_iota)
+        self.__Phi = kwargs.get('phic', DEFAULT_phic)
+        self.__dL = kwargs.get('distance', DEFAULT_dL)
+        self.__vommax = kwargs.get('vommax', DEFAULT_vommax)
+        self.__fmin = kwargs.get('fmin', DEFAULT_fmin)
+    @property
+    def vommax(self):
+        return self.__vommax
+    @property
+    def e0(self):
+        return self.__e0
+    @property
+    def zeta0(self):
+        return self.__zeta0
+    @property
+    def distance(self):
+        return self.__dL
+    @property
+    def m1(self):
+        return self.__m1
+    @property
+    def m2(self):
+        return self.__m2
+    @property
+    def eta(self):
+        return self.__m1*self.__m2 / (self.__m1 + self.__m2)**2
+    @property
+    def dm(self):
+        return np.sqrt(1. - 4.*self.eta)
+    @property
+    def Theta(self):
+        return self.__Theta
+    @property
+    def Phi(self):
+        return self.__Phi
+    @property
+    def Mtot(self):
+        return self.m1 + self.m2
+    @property
+    def X1(self):
+        return 0.5*(1. + self.dm)
+    @property
+    def X2(self):
+        return 0.5*(1. - self.dm)
+    @property
+    def MT(self):
+        return (self.Mtot)*MSUN_TSCALE
+    @property
+    def v0(self):
+        return np.power(np.pi*(self.m1+self.m2)*MSUN_TSCALE*self.__fmin, 1./3.)
+    @property
+    def fmax(self):
+        return self.vommax**3 / (np.pi * self.MT)
+
+
 class pypngwtd(object):
     def __init__(self, **kwargs):
         self.__m1 = kwargs.get('m1', DEFAULT_m1)

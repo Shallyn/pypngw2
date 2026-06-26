@@ -12,7 +12,8 @@ import ctypes
 from scipy.integrate import solve_ivp
 
 from .ctypes_struct import *
-from .pngwtd import pypngwtd, DetectorDict
+from .pngwtd import pypngwtd, DetectorDict, pyPNBBHParams
+from ._native import load_shared_library
 from pathlib import Path
 import json
 import glob
@@ -30,11 +31,10 @@ import glob
 #     raise FileNotFoundError(f'cannot find {lib_dir}')
 
 
-lib_path = Path(__file__).parent / 'libcore/libcore.so'
-myLib = ctypes.CDLL(lib_path)
-
-libBasic_path = Path(__file__).parent / 'libbasic/libbasic.dylib'
-myLibBasic = ctypes.CDLL(libBasic_path)
+_PACKAGE_DIR = Path(__file__).parent
+myLibBasic = load_shared_library(_PACKAGE_DIR, 'libbasic', 'libbasic')
+myLibPNFourier = load_shared_library(_PACKAGE_DIR, 'libpnfourier', 'libpnFourier')
+myLib = load_shared_library(_PACKAGE_DIR, 'libcore', 'libcore')
 
 myLibBasic.CreateREAL8Vector.restype = ctypes.POINTER(pyREAL8Vector)
 
@@ -63,6 +63,21 @@ myLib.calculate_QWaveformVec.restype = ctypes.c_int
 # myLib.tmpUtils.restype = ctypes.c_double
 # def test_func(val:float):
 #     return myLib.tmpUtils(ctypes.c_double(val))
+
+myLib3 = load_shared_library(_PACKAGE_DIR, 'libpngw3', 'libpngw3')
+myLib3.itf_tevolve_orbit_3PN.restype = ctypes.c_int
+myLib3.itf_tevolve_orbit_pce10_3PN.restype = ctypes.c_int
+
+myLib3.itf_tevolve_orbit_h22_3PN.restype = ctypes.c_int
+myLib3.CreatePNGW3Core.restype = ctypes.POINTER(pyPNGW3Core)
+
+# Debug
+myLib3.debug_evaluate_hlmpFourierMode.restype = ctypes.c_int
+def debug_evaluate_hlmpFourierMode(p, eta, v, e):
+    out_r = ctypes.c_double(0)
+    out_i = ctypes.c_double(0)
+    myLib3.debug_evaluate_hlmpFourierMode(ctypes.c_int(p), ctypes.c_double(eta), ctypes.c_double(v), ctypes.c_double(e), ctypes.byref(out_r), ctypes.byref(out_i))
+    return out_r.value + 1.j * out_i.value
 
 def check_memory_leak():
     os.environ['DEBUG'] = '81'
@@ -722,7 +737,6 @@ def iter_strain_SPA(m1:float, m2:float,
     for hpref, ReAmpQ, ImAmpQ, phase in bbh.htilde_strain_SPA_emodes_iter(freqs, apf):
         yield hpref, freqs, ReAmpQ, ImAmpQ, phase
 
-
 def calculate_strain_SPA(m1:float, m2:float, 
                          chi1:float, chi2:float, 
                          iota:float, phic:float, e0:float, distance:float,
@@ -752,3 +766,189 @@ def calculate_strain_SPA(m1:float, m2:float,
     htildeSPA = bbh.htilde_strain_SPA(freqs, apf)
     return freqs, htildeSPA
 
+def calculate_strain_fixdet_SPA(m1:float, m2:float, 
+                         chi1:float, chi2:float, 
+                         iota:float, phic:float, e0:float, distance:float,
+                         fmin:float, deltaF:float, 
+                         detname:str, psi:float, ra:float, dec:float,
+                         PN_Order:float = 2.0,
+                         **kwargs):
+    '''
+        NOTE:
+            m1, m2     :    component masses of the BHs [M_solar]
+            chi1, chi2 :    component dimensionless spin of the BHs
+            iota, phic :    inclination angle and merger phase
+            fmin, e0   :    initial frequency and the corresponding initial eccentricity
+            distance   :    luminosity distance [Mpc]
+            detname    :    name of the detector
+                                only CE1, CE2, ET1, ET2, ET3, H1, L1, Virgo, KAGRA are available
+            psi        :    polarization angle
+            ra, dec    :    right ascension and declination
+            kwargs     :    other parameters are kappa1 and kappa2.
+    '''
+    # fstartTD, deltaF, tshift, freqWind = calculate_fStart(fmin, m1, m2, chi1, chi2, deltaT)
+    apf = AntennaPatternF(detname, psi=psi, ra=ra, dec=dec)
+    bbh = pybbh(m1=m1, m2=m2, chi1=chi1, chi2=chi2, e0=e0, distance=distance,
+                iota=iota, phic = phic, fmin = fmin, vommax = 0.277, PN_Order = PN_Order, **kwargs)
+    fmax = bbh.vommax**3 / (np.pi * bbh.MT) if 'fmax' not in kwargs else kwargs['fmax']
+    freqs = np.arange(fmin, fmax, deltaF) if 'freqs' not in kwargs else kwargs['freqs']
+    htilde_SPA_p, htilde_SPA_c = bbh.htilde_SPA(freqs)
+    htildeSPA = htilde_SPA_p * apf.barFplus + htilde_SPA_c * apf.barFcross
+    return freqs, htildeSPA
+
+def calculate_hpcSPA_fixedapf(m1:float, m2:float, 
+                         chi1:float, chi2:float, 
+                         iota:float, phic:float, e0:float, distance:float,
+                         fmin:float, deltaF:float, 
+                         detname:str, psi:float, ra:float, dec:float,
+                         PN_Order:float = 2.0,
+                         **kwargs):
+    '''
+        NOTE:
+            m1, m2     :    component masses of the BHs [M_solar]
+            chi1, chi2 :    component dimensionless spin of the BHs
+            iota, phic :    inclination angle and merger phase
+            fmin, e0   :    initial frequency and the corresponding initial eccentricity
+            distance   :    luminosity distance [Mpc]
+            detname    :    name of the detector
+                                only CE1, CE2, ET1, ET2, ET3, H1, L1, Virgo, KAGRA are available
+            psi        :    polarization angle
+            ra, dec    :    right ascension and declination
+            kwargs     :    other parameters are kappa1 and kappa2.
+    '''
+    # fstartTD, deltaF, tshift, freqWind = calculate_fStart(fmin, m1, m2, chi1, chi2, deltaT)
+    apf = AntennaPatternF(detname, psi=psi, ra=ra, dec=dec)
+    bbh = pybbh(m1=m1, m2=m2, chi1=chi1, chi2=chi2, e0=e0, distance=distance,
+                iota=iota, phic = phic, fmin = fmin, vommax = 0.277, PN_Order = PN_Order, **kwargs)
+    fmax = bbh.vommax**3 / (np.pi * bbh.MT) if 'fmax' not in kwargs else kwargs['fmax']
+    freqs = np.arange(fmin, fmax, deltaF) if 'freqs' not in kwargs else kwargs['freqs']
+    htilde_SPA_p, htilde_SPA_c = bbh.htilde_SPA(freqs)
+    # htildeSPA = htilde_SPA_p * apf.barFplus + htilde_SPA_c * apf.barFcross
+    return freqs, htilde_SPA_p, htilde_SPA_c, apf
+
+
+class pngwdyn(object):
+    def __init__(self, dyndata:ctypes.POINTER(pyITF_PNGW_TEvolve)):
+        self.tVec = convert_REAL8Vector_to_numpy(dyndata.contents.tVec)
+        self.vVec = convert_REAL8Vector_to_numpy(dyndata.contents.vVec)
+        self.eVec = convert_REAL8Vector_to_numpy(dyndata.contents.eVec)
+        self.nVec = convert_REAL8Vector_to_numpy(dyndata.contents.nVec)
+        self.lVec = convert_REAL8Vector_to_numpy(dyndata.contents.lVec)
+        self.lbdVec = convert_REAL8Vector_to_numpy(dyndata.contents.lbdVec)
+        self.chiVec = convert_REAL8Vector_to_numpy(dyndata.contents.chiVec)
+
+        self.vPAVec = convert_REAL8Vector_to_numpy(dyndata.contents.vPAVec)
+        self.ePAVec = convert_REAL8Vector_to_numpy(dyndata.contents.ePAVec)
+        self.nPAVec = convert_REAL8Vector_to_numpy(dyndata.contents.nPAVec)
+        self.lPAVec = convert_REAL8Vector_to_numpy(dyndata.contents.lPAVec)
+        self.lbdPAVec = convert_REAL8Vector_to_numpy(dyndata.contents.lbdPAVec)
+
+        self.hlms = {}
+        self.hlms['h22'] = convert_REAL8Vector_to_numpy(dyndata.contents.h22r) + \
+                       1.j*convert_REAL8Vector_to_numpy(dyndata.contents.h22i)
+        self.hlms['h21'] = convert_REAL8Vector_to_numpy(dyndata.contents.h21r) + \
+                       1.j*convert_REAL8Vector_to_numpy(dyndata.contents.h21i)
+        self.hlms['h20'] = convert_REAL8Vector_to_numpy(dyndata.contents.h20r) + \
+                       1.j*convert_REAL8Vector_to_numpy(dyndata.contents.h20i)
+
+        self.hlms['h33'] = convert_REAL8Vector_to_numpy(dyndata.contents.h33r) + \
+                       1.j*convert_REAL8Vector_to_numpy(dyndata.contents.h33i)
+        self.hlms['h32'] = convert_REAL8Vector_to_numpy(dyndata.contents.h32r) + \
+                       1.j*convert_REAL8Vector_to_numpy(dyndata.contents.h32i)
+        self.hlms['h31'] = convert_REAL8Vector_to_numpy(dyndata.contents.h31r) + \
+                       1.j*convert_REAL8Vector_to_numpy(dyndata.contents.h31i)
+        self.hlms['h30'] = convert_REAL8Vector_to_numpy(dyndata.contents.h30r) + \
+                       1.j*convert_REAL8Vector_to_numpy(dyndata.contents.h30i)
+
+        self.hlms['h44'] = convert_REAL8Vector_to_numpy(dyndata.contents.h44r) + \
+                       1.j*convert_REAL8Vector_to_numpy(dyndata.contents.h44i)
+        self.hlms['h43'] = convert_REAL8Vector_to_numpy(dyndata.contents.h43r) + \
+                       1.j*convert_REAL8Vector_to_numpy(dyndata.contents.h43i)
+        self.hlms['h42'] = convert_REAL8Vector_to_numpy(dyndata.contents.h42r) + \
+                       1.j*convert_REAL8Vector_to_numpy(dyndata.contents.h42i)
+        self.hlms['h41'] = convert_REAL8Vector_to_numpy(dyndata.contents.h41r) + \
+                       1.j*convert_REAL8Vector_to_numpy(dyndata.contents.h41i)
+        self.hlms['h40'] = convert_REAL8Vector_to_numpy(dyndata.contents.h40r) + \
+                       1.j*convert_REAL8Vector_to_numpy(dyndata.contents.h40i)
+
+        self.hlms['h55'] = convert_REAL8Vector_to_numpy(dyndata.contents.h55r) + \
+                       1.j*convert_REAL8Vector_to_numpy(dyndata.contents.h55i)
+        self.hlms['h54'] = convert_REAL8Vector_to_numpy(dyndata.contents.h54r) + \
+                       1.j*convert_REAL8Vector_to_numpy(dyndata.contents.h54i)
+        self.hlms['h53'] = convert_REAL8Vector_to_numpy(dyndata.contents.h53r) + \
+                       1.j*convert_REAL8Vector_to_numpy(dyndata.contents.h53i)
+        self.hlms['h52'] = convert_REAL8Vector_to_numpy(dyndata.contents.h52r) + \
+                       1.j*convert_REAL8Vector_to_numpy(dyndata.contents.h52i)
+        self.hlms['h51'] = convert_REAL8Vector_to_numpy(dyndata.contents.h51r) + \
+                       1.j*convert_REAL8Vector_to_numpy(dyndata.contents.h51i)
+        self.hlms['h50'] = convert_REAL8Vector_to_numpy(dyndata.contents.h50r) + \
+                       1.j*convert_REAL8Vector_to_numpy(dyndata.contents.h50i)
+
+class pngwdynh22(object):
+    def __init__(self, dyndata:ctypes.POINTER(pyITF_PNGW_TEvolve_h22)):
+        self.tVec = convert_REAL8Vector_to_numpy(dyndata.contents.tVec)
+        self.vVec = convert_REAL8Vector_to_numpy(dyndata.contents.vVec)
+        self.eVec = convert_REAL8Vector_to_numpy(dyndata.contents.eVec)
+        self.nVec = convert_REAL8Vector_to_numpy(dyndata.contents.nVec)
+        self.lVec = convert_REAL8Vector_to_numpy(dyndata.contents.lVec)
+        self.lbdVec = convert_REAL8Vector_to_numpy(dyndata.contents.lbdVec)
+        self.chiVec = convert_REAL8Vector_to_numpy(dyndata.contents.chiVec)
+
+        self.vPAVec = convert_REAL8Vector_to_numpy(dyndata.contents.vPAVec)
+        self.ePAVec = convert_REAL8Vector_to_numpy(dyndata.contents.ePAVec)
+        self.nPAVec = convert_REAL8Vector_to_numpy(dyndata.contents.nPAVec)
+        self.lPAVec = convert_REAL8Vector_to_numpy(dyndata.contents.lPAVec)
+        self.lbdPAVec = convert_REAL8Vector_to_numpy(dyndata.contents.lbdPAVec)
+
+        self.hlms = {}
+        self.hlms['h22'] = convert_REAL8Vector_to_numpy(dyndata.contents.h22r_full) + \
+                       1.j*convert_REAL8Vector_to_numpy(dyndata.contents.h22i_full)
+        self.hlms['h22_pc'] = convert_REAL8Vector_to_numpy(dyndata.contents.h22r_pce10) + \
+                       1.j*convert_REAL8Vector_to_numpy(dyndata.contents.h22i_pce10)
+
+class pypnbbh(pyPNBBHParams):
+    def __init__(self, **kwargs):
+        super(pypnbbh, self).__init__(**kwargs)
+        self.__EPS_ABS = kwargs.get("EPS_ABS", 1e-16)
+        self.__EPS_REL = kwargs.get("EPS_ABS", 1e-16)
+        self.__vmax = kwargs.get("vmax", 1./np.sqrt(6))
+        self.__PNOrder = kwargs.get("PNOrder", 0)
+        c_hpms = pyPNGW3HyperParams()
+        c_hpms.EPS_ABS = ctypes.c_double(self.__EPS_ABS)
+        c_hpms.EPS_REL = ctypes.c_double(self.__EPS_REL)
+        c_hpms.PNOrder = ctypes.c_uint(self.__PNOrder)
+        c_hpms.vmax = ctypes.c_double(self.__vmax)
+        self.c_core = myLib3.CreatePNGW3Core(
+            ctypes.c_double(self.eta),
+            ctypes.c_double(self.e0),
+            ctypes.c_double(self.v0),
+            ctypes.c_double(self.zeta0),
+            ctypes.c_double(self.Phi),
+            ctypes.c_double(0.0),
+            ctypes.c_double(self.Theta),
+            ctypes.byref(c_hpms)
+        )
+        
+    def evaluate_hlms_TD(self):
+        ret_dynstruct = ctypes.POINTER(pyITF_PNGW_TEvolve)()
+        ret = myLib3.itf_tevolve_orbit_3PN(self.c_core, ctypes.byref(ret_dynstruct))
+        if ret != 0:
+            return None
+        else:
+            return pngwdyn(ret_dynstruct)
+
+    def evaluate_hlms_pce10_TD(self):
+        ret_dynstruct = ctypes.POINTER(pyITF_PNGW_TEvolve)()
+        ret = myLib3.itf_tevolve_orbit_pce10_3PN(self.c_core, ctypes.byref(ret_dynstruct))
+        if ret != 0:
+            return None
+        else:
+            return pngwdyn(ret_dynstruct)
+
+    def evaluate_h22_TD(self):
+        ret_dynstruct = ctypes.POINTER(pyITF_PNGW_TEvolve_h22)()
+        ret = myLib3.itf_tevolve_orbit_h22_3PN(self.c_core, ctypes.byref(ret_dynstruct))
+        if ret != 0:
+            return None
+        else:
+            return pngwdynh22(ret_dynstruct)

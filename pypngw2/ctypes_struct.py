@@ -25,9 +25,11 @@ class c_complex(ctypes.Structure):
     def value(self):
         return self.real+1j*self.imag # fields declared above
 
+
 c_double_complex_p = ctypes.POINTER(c_complex)
 c_double_p = ctypes.POINTER(ctypes.c_double)
 b_double_complex = lambda c: ctypes.byref(c_complex(c.real, c.imag))
+
 
 class pyBBHDynVariables(ctypes.Structure):
     _fields_ = (('e0', ctypes.c_double),
@@ -143,3 +145,101 @@ class pyAntennaPatternF(ctypes.Structure):
         ("barFplus", ctypes.c_double),
         ("barFcross", ctypes.c_double)
     )
+
+class pyPNGW3HyperParams(ctypes.Structure):
+    _fields_ = [
+        ("EPS_ABS",  ctypes.c_double),   # absolute tolerance
+        ("EPS_REL",  ctypes.c_double),   # relative tolerance
+        ("PNOrder",  ctypes.c_uint),     # post-Newtonian order (unsigned int)
+        ("vmax",     ctypes.c_double)    # maximum v to integrate up to
+    ]
+
+class pyPNGW3Core(ctypes.Structure):
+    _fields_ = [
+        # --- Core parameters ---
+        ("eta",          ctypes.c_double),                       # mass ratio
+        ("initial_e",    ctypes.c_double),                       # initial eccentricity
+        ("initial_v",    ctypes.c_double),                       # initial (averaged) frequency
+        ("initial_chi",  ctypes.c_double),                       # initial relativistic anomaly
+        ("phic",         ctypes.c_double),                       # coalescence phase
+        ("tc",           ctypes.c_double),                       # coalescence time
+        ("iota",         ctypes.c_double),                       # inclination angle
+
+        # --- Auxiliary parameters ---
+        ("hParams",      ctypes.POINTER(pyPNGW3HyperParams))       # pointer to hyper-parameters
+    ]
+
+class pyITF_PNGW_TEvolve(ctypes.Structure):
+    _fields_ = [
+        ('length',          ctypes.c_int),
+        ('tVec',            ctypes.POINTER(pyREAL8Vector)),
+        ('vVec',            ctypes.POINTER(pyREAL8Vector)),
+        ('eVec',            ctypes.POINTER(pyREAL8Vector)),
+        ('nVec',            ctypes.POINTER(pyREAL8Vector)),
+        ('lVec',            ctypes.POINTER(pyREAL8Vector)),
+        ('lbdVec',          ctypes.POINTER(pyREAL8Vector)),
+        ('chiVec',          ctypes.POINTER(pyREAL8Vector)),
+        ('vPAVec',            ctypes.POINTER(pyREAL8Vector)),
+        ('ePAVec',            ctypes.POINTER(pyREAL8Vector)),
+        ('nPAVec',            ctypes.POINTER(pyREAL8Vector)),
+        ('lPAVec',            ctypes.POINTER(pyREAL8Vector)),
+        ('lbdPAVec',          ctypes.POINTER(pyREAL8Vector)),
+        ('h22r',            ctypes.POINTER(pyREAL8Vector)),
+        ('h22i',            ctypes.POINTER(pyREAL8Vector)),
+        ('h21r',            ctypes.POINTER(pyREAL8Vector)),
+        ('h21i',            ctypes.POINTER(pyREAL8Vector)),
+        ('h20r',            ctypes.POINTER(pyREAL8Vector)),
+        ('h20i',            ctypes.POINTER(pyREAL8Vector)),
+        ('h33r',            ctypes.POINTER(pyREAL8Vector)),
+        ('h33i',            ctypes.POINTER(pyREAL8Vector)),
+        ('h32r',            ctypes.POINTER(pyREAL8Vector)),
+        ('h32i',            ctypes.POINTER(pyREAL8Vector)),
+        ('h31r',            ctypes.POINTER(pyREAL8Vector)),
+        ('h31i',            ctypes.POINTER(pyREAL8Vector)),
+        ('h30r',            ctypes.POINTER(pyREAL8Vector)),
+        ('h30i',            ctypes.POINTER(pyREAL8Vector)),
+        ('h44r',            ctypes.POINTER(pyREAL8Vector)),
+        ('h44i',            ctypes.POINTER(pyREAL8Vector)),
+        ('h43r',            ctypes.POINTER(pyREAL8Vector)),
+        ('h43i',            ctypes.POINTER(pyREAL8Vector)),
+        ('h42r',            ctypes.POINTER(pyREAL8Vector)),
+        ('h42i',            ctypes.POINTER(pyREAL8Vector)),
+        ('h41r',            ctypes.POINTER(pyREAL8Vector)),
+        ('h41i',            ctypes.POINTER(pyREAL8Vector)),
+        ('h40r',            ctypes.POINTER(pyREAL8Vector)),
+        ('h40i',            ctypes.POINTER(pyREAL8Vector)),
+        ('h55r',            ctypes.POINTER(pyREAL8Vector)),
+        ('h55i',            ctypes.POINTER(pyREAL8Vector)),
+        ('h54r',            ctypes.POINTER(pyREAL8Vector)),
+        ('h54i',            ctypes.POINTER(pyREAL8Vector)),
+        ('h53r',            ctypes.POINTER(pyREAL8Vector)),
+        ('h53i',            ctypes.POINTER(pyREAL8Vector)),
+        ('h52r',            ctypes.POINTER(pyREAL8Vector)),
+        ('h52i',            ctypes.POINTER(pyREAL8Vector)),
+        ('h51r',            ctypes.POINTER(pyREAL8Vector)),
+        ('h51i',            ctypes.POINTER(pyREAL8Vector)),
+        ('h50r',            ctypes.POINTER(pyREAL8Vector)),
+        ('h50i',            ctypes.POINTER(pyREAL8Vector))
+    ]
+
+class pyITF_PNGW_TEvolve_h22(ctypes.Structure):
+    _fields_ = [
+        ('length',          ctypes.c_int),
+        ('tVec',            ctypes.POINTER(pyREAL8Vector)),
+        ('vVec',            ctypes.POINTER(pyREAL8Vector)),
+        ('eVec',            ctypes.POINTER(pyREAL8Vector)),
+        ('nVec',            ctypes.POINTER(pyREAL8Vector)),
+        ('lVec',            ctypes.POINTER(pyREAL8Vector)),
+        ('lbdVec',          ctypes.POINTER(pyREAL8Vector)),
+        ('chiVec',          ctypes.POINTER(pyREAL8Vector)),
+        ('vPAVec',            ctypes.POINTER(pyREAL8Vector)),
+        ('ePAVec',            ctypes.POINTER(pyREAL8Vector)),
+        ('nPAVec',            ctypes.POINTER(pyREAL8Vector)),
+        ('lPAVec',            ctypes.POINTER(pyREAL8Vector)),
+        ('lbdPAVec',          ctypes.POINTER(pyREAL8Vector)),
+        ('h22r_full',            ctypes.POINTER(pyREAL8Vector)),
+        ('h22i_full',            ctypes.POINTER(pyREAL8Vector)),
+        ('h22r_pce10',            ctypes.POINTER(pyREAL8Vector)),
+        ('h22i_pce10',            ctypes.POINTER(pyREAL8Vector)),
+    ]
+
