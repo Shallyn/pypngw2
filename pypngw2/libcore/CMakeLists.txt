@@ -11,7 +11,7 @@ set(DIR_LIB_SRCS
 add_library (core SHARED ${DIR_LIB_SRCS})
 add_library (proj::core ALIAS core)
 target_include_directories(core PUBLIC "$<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}>")
-target_link_libraries(core basic)
+target_link_libraries(core basic ${PYPNGW2_MATH_LIB})
 
 # profect info
 project(MAIN_CORE)

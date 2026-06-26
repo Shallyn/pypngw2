@@ -7,6 +7,12 @@ project(pypngw)
 set(CMAKE_POSITION_INDEPENDENT_CODE ON)
 set(CMAKE_BUILD_RPATH_USE_ORIGIN ON)
 
+if(UNIX AND NOT APPLE)
+    set(PYPNGW2_MATH_LIB m)
+else()
+    set(PYPNGW2_MATH_LIB)
+endif()
+
 if(APPLE)
     set(PYPNGW2_NATIVE_RPATH
         "@loader_path"

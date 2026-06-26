@@ -10,7 +10,7 @@ set(DIR_LIB_SRCS
 add_library (pnFourier SHARED ${DIR_LIB_SRCS})
 add_library (proj::pnFourier ALIAS pnFourier)
 target_include_directories(pnFourier PUBLIC "$<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}>")
-target_link_libraries(pnFourier basic gsl fftw3)
+target_link_libraries(pnFourier basic gsl fftw3 ${PYPNGW2_MATH_LIB})
 
 # profect info
 # project(MAIN_BASIC)
